@@ -58,7 +58,7 @@ class Rock(pygame.sprite.Sprite):
                  'rock21.png', 'rock22.png', 'rock23.png', 'rock24.png', 'rock25.png', \
                  'rock26.png', 'rock27.png', 'rock28.png', 'rock29.png', 'rock30.png'
                  )
-        self.image = pygame.image.load(random.shoice(rocks))
+        self.image = pygame.image.load(random.choice(rocks))
         self.rect = self.image.get_rect()
         self.rect.x = xpos
         self.rect.y = ypos
@@ -106,7 +106,7 @@ class Warp(pygame.sprite.Sprite):
         self.rect.x = x - self.rect.centerx
         self.rect.y = y - self.rect.centery
 
-def drw_repeating_background(background_img):
+def draw_repeating_background(background_img):
     background_rect = background_img.get_rect()
     for i in range(int(math.ceil(WINDOW_WIDTH / background_rect.width))):
         for j in range(int(math.ceil(WINDOW_HEIGHT / background_rect.height))):
@@ -128,8 +128,8 @@ def game_loop():
     pygame.mixer.music.play(-1)   #-1은 무한반복 의미미
     pygame.mouse.set_visible(False)
 
-    spaceship.Spaceship()
-    spaceship.set_pos(*pygame.mouse.get_post())
+    spaceship = Spaceship()
+    spaceship.set_pos(*pygame.mouse.get_pos())
     rocks = pygame.sprite.Group()
     warps = pygame.sprite.Group()
 
@@ -195,28 +195,78 @@ def game_loop():
                     mouse_pos = pygame.mouse.get_pos()
                     if mouse_pos[0] <= 10:
                         pygame.mouse.set_pos(WINDOW_WIDTH - 10, mouse_pos[1])
+                    elif mouse_pos[0] >= WINDOW_WIDTH -10:
+                        pygame.mouse.set_pos(0 +10, mouse_pos[1])
+                    elif mouse_pos[1] <= 10:
+                        pygame.mouse.set_pos(mouse_pos[0], WINDOW_HEIGHT - 10)
+                    elif mouse_pos[1] >= WINDOW_HEIGHT - 10:
+                        pygame.mouse.set_pos(mouse_pos[0], 0 + 10)
+                    spaceship.set_pos(*mouse_pos)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if warp_count > 0:
+                        warp_count -= 1
+                        warp_sound.play()
+                        sleep(1)
+                        rocks.empty()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_p:
+                        paused = not paused
+                        if paused:
+                            transp_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+                            transp_surf.set_alpha(150)
+                            screen.blit(transp_surf, transp_surf.get_rect())
+                            pygame.mouse.set_visible(True)
+                            draw_text("일시정지",
+                                      pygame.font.Font('NanumGothic.ttf', 60),
+                                      screen, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, YELLOW)
+                if event.type == QUIT:
+                    return 'quit'
+    return 'game_screen'
 
+def game_screen():
+    global score
+    pygame.mouse.set_visible(True)
 
+    start_image = pygame.image.load('game_screen.png')
+    screen.blit(start_image, [0,0])
 
+    draw_text('우주 암석 피하기',
+              pygame.font.Font('NanumGothic.ttf', 70), screen,
+              WINDOW_WIDTH / 2, WINDOW_HEIGHT / 3.4, WHITE)
+    draw_text('점수 : {}'.format(score),
+              default_font, screen,
+              WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2.4, YELLOW)
+    draw_text("마우스 버튼이나 'S'키를 누르면 게임이 시작됩니다.",
+              default_font, screen,
+              WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2.0, WHITE)
+    draw_text("게임을 종료하려면 'Q'키를 눌러주세요",
+              default_font, screen,
+              WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.8, WHITE)
 
+    pygame.display.update()
 
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                return 'quit'
+            elif event.key == pygame.K_s:
+                return 'play'
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            return 'play'
+        if event.type == QUIT:
+            return 'quit'
 
+    return 'game_screen'
 
+def main_loop():
+    action = 'game_screen'
+    while action != 'quit':
+        if action == 'game_screen':
+            action = game_screen()
+        elif action == 'play':
+            action = game_loop()
+    pygame.quit()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+main_loop()
 
 
